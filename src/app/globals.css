@@ -1,26 +1,200 @@
 @import "tailwindcss";
 
+@theme {
+  --color-ink-950: #05070d;
+  --color-ink-900: #080b14;
+  --color-ink-850: #0b0f1a;
+  --color-ink-800: #0f1420;
+  --color-ink-750: #141a29;
+  --color-ink-700: #1a2233;
+  --color-ink-600: #26314a;
+  --color-ink-500: #3a4763;
+  --color-ink-400: #5a6785;
+  --color-ink-300: #8290ad;
+  --color-ink-200: #b3bdd2;
+  --color-ink-100: #dde3ef;
+  --color-ink-50: #f2f5fa;
+
+  --color-brand-400: #5eead4;
+  --color-brand-500: #2dd4bf;
+  --color-brand-600: #14b8a6;
+
+  --color-pos: #22c55e;
+  --color-neg: #ef4444;
+  --color-warn: #f59e0b;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface: var(--color-ink-900);
+  --surface-raised: var(--color-ink-850);
+  --surface-card: rgba(20, 26, 41, 0.72);
+  --border: rgba(90, 103, 133, 0.22);
+  --border-strong: rgba(90, 103, 133, 0.4);
+  --text: var(--color-ink-100);
+  --text-dim: var(--color-ink-300);
+  --text-faint: var(--color-ink-400);
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  border-color: var(--border);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(45, 212, 191, 0.09), transparent),
+    radial-gradient(ellipse 60% 40% at 90% 10%, rgba(168, 85, 247, 0.05), transparent);
+  background-attachment: fixed;
+  min-height: 100vh;
 }
+
+::selection {
+  background: rgba(45, 212, 191, 0.28);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-700);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-600);
+}
+
+@utility card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+@utility grid-bg {
+  background-image:
+    linear-gradient(rgba(90, 103, 133, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(90, 103, 133, 0.07) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes pulse-ring {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+.animate-fade-up { animation: fade-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-sweep { animation: sweep 4s linear infinite; transform-origin: center; }
+.animate-blink { animation: blink 1.4s ease-in-out infinite; }
+
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-ink-800) 25%, var(--color-ink-750) 50%, var(--color-ink-800) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
+}
+
+/* Markdown rendering inside ChatOS */
+.prose-chat h1, .prose-chat h2, .prose-chat h3 {
+  font-weight: 600;
+  margin: 1em 0 0.4em;
+  color: var(--color-ink-50);
+}
+.prose-chat h2 { font-size: 1.05rem; }
+.prose-chat h3 { font-size: 0.95rem; }
+.prose-chat p { margin: 0.55em 0; line-height: 1.65; }
+.prose-chat ul, .prose-chat ol { margin: 0.55em 0; padding-left: 1.25em; }
+.prose-chat li { margin: 0.22em 0; line-height: 1.6; }
+.prose-chat strong { color: var(--color-ink-50); font-weight: 600; }
+.prose-chat em { color: var(--text-dim); }
+.prose-chat hr { border: 0; border-top: 1px solid var(--border); margin: 1.1em 0; }
+.prose-chat code {
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+  background: var(--color-ink-800);
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+.prose-chat pre {
+  background: var(--color-ink-950);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  overflow-x: auto;
+  margin: 0.7em 0;
+}
+.prose-chat pre code { background: none; border: 0; padding: 0; font-size: 0.8rem; }
+.prose-chat table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  font-size: 0.83rem;
+  display: block;
+  overflow-x: auto;
+}
+.prose-chat th {
+  text-align: left;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  font-weight: 500;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.prose-chat td {
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.prose-chat a { color: var(--color-brand-400); text-decoration: underline; text-underline-offset: 2px; }
