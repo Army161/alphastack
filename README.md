@@ -28,6 +28,14 @@ straight into its product.
 
 ---
 
+## Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FArmy161%2Falphastack&env=AUTH_SECRET&envDescription=Session%20signing%20secret%20-%2032%2B%20random%20bytes&project-name=alphastack&repository-name=alphastack)
+
+The app boots with **zero required configuration** — every module, the agent, the
+REST API and the MCP endpoint are stateless. Add `DATABASE_URL` (Turso) to make
+accounts and saved positions persist. Full checklist in **[DEPLOY.md](DEPLOY.md)**.
+
 ## Quick start
 
 ```bash
@@ -40,19 +48,48 @@ npm run dev
 Open <http://localhost:3000> and click **Try the live demo** — a pre-seeded account
 with a portfolio, exit ladder and alert history, on the Operator plan.
 
-Everything works with **zero configuration**. Optional upgrades:
+Everything works with **zero configuration**, including live market data.
+
+## Live data
+
+Six providers, all keyless on their free tiers, each degrading independently — a
+dead upstream downgrades one block and is labelled in the UI, never taking the
+app down.
+
+| Provider | Supplies |
+|---|---|
+| **CoinGecko** | Spot prices, market caps, 24h change, daily history |
+| **OKX** | Open interest, funding rate, long/short account ratio |
+| **Hyperliquid** | Perp funding, OI and oracle price — native coverage of HYPE |
+| **FRED** | Effective fed funds + 2y/10y Treasuries, driving the macro regime |
+| **DefiLlama** | Chain TVL |
+| **Alternative.me** | Fear & Greed index |
+
+Every figure carries **provenance**: the UI shows `PRICE · COINGECKO` or
+`LIQ · MODELLED` next to the numbers, and `/api/health` reports provider status,
+latency and rate-limiter state.
+
+Engineering that makes free tiers viable: a TTL cache with stale-while-revalidate
+and single-flight dedup, a per-host rate limiter with an exponential-backoff
+circuit breaker, one batched quote call for the whole universe, and per-asset
+history fetched only on focused views with a 12-hour TTL.
+
+Optional upgrades:
 
 | Env var | Effect when set |
 |---|---|
 | `ANTHROPIC_API_KEY` | ChatOS switches from local intent-routing to full multi-tool LLM synthesis |
-| `ENABLE_LIVE_DATA=1` | Spot prices pulled from a live provider instead of the deterministic model |
+| `DATABASE_URL` | Persistent storage (Turso libSQL). Without it on serverless, state is per-instance |
+| `COINGECKO_API_KEY` | Pro tier — removes the ~10 req/min rate limit |
+| `COINGLASS_API_KEY` | Real liquidation totals instead of modelled |
 | `STRIPE_SECRET_KEY` + price IDs | Real checkout and subscription webhooks instead of local plan granting |
+| `ENABLE_LIVE_DATA=0` | Pins the platform to the deterministic model |
 
 ---
 
 ## Stack
 
-- **Next.js 16** (App Router, RSC, server actions) · **React 19** · **TypeScript**
+- **Next.js 15.5** (App Router, RSC, server actions) · **React 19** · **TypeScript**
 - **Tailwind CSS v4** with a token-based dark design system
 - **Drizzle ORM** over **libSQL/SQLite** — a local file by default, swap `DATABASE_URL` for Turso in production
 - **jose** + **bcryptjs** for cookie sessions and password hashing (no third-party auth dependency)
@@ -78,7 +115,13 @@ src/
     agent/
       tools.ts        14 typed tool definitions — ONE source of truth
       runtime.ts      Anthropic tool-calling loop + deterministic fallback
-    data/market.ts    Deterministic market model + live provider adapter
+    data/
+      market.ts       Live-first market context, model fallback, provenance
+      live.ts         Orchestrates the shared snapshot across providers
+      cache.ts        TTL cache: stale-while-revalidate + single-flight
+      universe.ts     Tracked assets and cycle reference levels
+      providers/      coingecko · derivatives (OKX/Hyperliquid) · macro (FRED,
+                      DefiLlama, Fear&Greed) · limiter (rate limit + breaker)
     db/               Drizzle schema, client, idempotent DDL bootstrap
     auth/             Session JWT, server actions, demo seeding
     billing/plans.ts  Plan definitions and limit enforcement
@@ -180,6 +223,8 @@ investment or trading advice, and nothing it outputs is a recommendation to buy 
 sell any asset. The Ladder module is a rules engine that executes only rules the
 user defines; it never places orders and is not connected to any exchange.
 
-By default the platform runs on a **deterministic market model**, not live prices —
-every figure is reproducible and internally consistent, but it is modelled. Set
-`ENABLE_LIVE_DATA=1` and connect a data provider before relying on any number.
+Live market data is on by default. Where a provider cannot supply a figure the
+platform falls back to a **deterministic model** and labels it `MODELLED` in the
+UI rather than presenting it as real. Two figures are always estimates and say so:
+liquidation totals without a Coinglass key, and market-wide open interest, which
+is grossed up from a single venue's book by that venue's approximate share.

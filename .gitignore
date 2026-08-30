@@ -43,3 +43,5 @@ next-env.d.ts
 alphastack.db
 alphastack.db-*
 .env.local
+
+.vercel
