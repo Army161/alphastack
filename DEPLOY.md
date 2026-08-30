@@ -110,6 +110,24 @@ claude mcp add --transport http alphastack https://<your-domain>/api/mcp
 
 ---
 
+## Security
+
+`npm audit` reports **0 vulnerabilities**. Two things get it there:
+
+- `drizzle-kit` was removed — it pulled a vulnerable `esbuild` and the project
+  never used it. Schema creation runs through `scripts/db-init.mjs`, and the app
+  also bootstraps its own schema lazily on first request.
+- `postcss` and `sharp` are pinned forward via npm `overrides`, patching the
+  transitive advisories Next 15.5 would otherwise carry.
+
+Re-check after any dependency bump:
+
+```bash
+npm audit
+```
+
+---
+
 ## Notes on the stack
 
 **Next.js is pinned to 15.5.24, not 16.x.** Next 16 emits a `.segments` build
